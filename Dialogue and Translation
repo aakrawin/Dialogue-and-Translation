@@ -1,4 +1,3 @@
-#Dialogue and Translation v0.1
 extends CharacterBody2D
 
 func _ready():
@@ -7,61 +6,56 @@ func _ready():
 func _process(delta):
 	dialogue_textbox()
 	get_dialogue()
-	print(count_next_dialogue,text_box,count_dialogue)
 
 
 #--------------------- interact ---------------------
 signal get_interact
-var interact = false
-var text_box = false
+var player_in_a_zone_interact = false
+var player_e_interact = false
 
 func _on_interact_zone_body_entered(body_player):
 	#แสดง E TO INTERACT
-	$textbox/e_interact.visible = true
+	$textbox/e_interact_label.visible = true
 	
 	#ส่ง signal
-	interact = true
-	get_interact.emit(interact)
+	player_in_a_zone_interact = true
+	get_interact.emit(player_in_a_zone_interact)
 
 func _on_interact_zone_body_exited(body_player):
 	#ไม่แสดง E TO INTERACT
-	$textbox/e_interact.visible = false
+	$textbox/e_interact_label.visible = false
 	
 	#ส่ง signal
-	interact = false
-	get_interact.emit(interact)
+	player_in_a_zone_interact = false
+	get_interact.emit(player_in_a_zone_interact)
 	
 	#แก้สัญาณ signal //player
-	text_box = false
+	player_e_interact = false
 	
 	#รีเซ็ตข้อความ
 	count_next_dialogue = 0
 	working_dialogue = false
 
 #signal //player
-func _on_player_get_textbox(get_textbox_bool): #player get interact
-	text_box = get_textbox_bool
-
+func _on_player_player_get_interact(player_e_press): #player get interact
+	player_e_interact = player_e_press
 
 
 
 #--------------------------- dialogue ---------------------------
-signal get_player_speed
-var on_dialogue = false
-
 var count_next_dialogue = 0
 var count_dialogue = 0
 var working_dialogue = false
 
 @export_category("Dialogue Setting")
-@export var cooldown_text = 0
+@export var cooldown_next_text = 0
 
 #แสดงข้อความ
 func get_dialogue():
-	$textbox/dialogue/cooldown_text.wait_time = cooldown_text
+	$textbox/dialogue/cooldown_text.wait_time = cooldown_next_text
 	
 	#เมื่อมีการกด E จะทำงาน หรือ text_box == true
-	if text_box:
+	if player_e_interact:
 		if Input.is_action_just_pressed("e_interact"): #skip ข้อความ
 			count_next_dialogue += 1
 			if count_dialogue <= 9:
@@ -88,30 +82,20 @@ func get_dialogue():
 
 #เวลาคันข้อความต่อไป
 func _on_cooldown_text_timeout():
-	if text_box:
+	if player_e_interact:
 		count_next_dialogue += 1
 	else :
 		count_next_dialogue += 0
 
 func dialogue_textbox():
-	if text_box:
-		$textbox/e_interact.visible = false
+	if player_e_interact:
+		$textbox/e_interact_label.visible = false
 		$textbox/dialogue.visible = true
-		
-		#ส่งสัญาณ singal ไปหา player
-		#เพื่อเมื่ออยู่ใน dialogue ให้เดินไม่ได้
-		on_dialogue = true
-		get_player_speed.emit(on_dialogue)
-		
-	elif text_box == false:
+	
+	elif player_e_interact == false:
 		$textbox/dialogue.visible = false
-		
-		#ส่งสัญาณ singal ไปหา player
-		#เพื่อเมื่ออยู่ใน dialogue ให้เดินไม่ได้
-		on_dialogue = false
-		get_player_speed.emit(on_dialogue)
 
+#แปลภาษา
 func translation():
-	#interact
-	$textbox/e_interact.text = tr("interact")
-
+	#แปลภาษา //interact
+	$textbox/e_interact_label.text = tr("interact")
