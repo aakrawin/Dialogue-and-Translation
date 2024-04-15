@@ -1,0 +1,117 @@
+#Dialogue and Translation v0.1
+extends CharacterBody2D
+
+func _ready():
+	TranslationServer.set_locale("th")
+
+func _process(delta):
+	dialogue_textbox()
+	get_dialogue()
+	print(count_next_dialogue,text_box,count_dialogue)
+
+
+#--------------------- interact ---------------------
+signal get_interact
+var interact = false
+var text_box = false
+
+func _on_interact_zone_body_entered(body_player):
+	#แสดง E TO INTERACT
+	$textbox/e_interact.visible = true
+	
+	#ส่ง signal
+	interact = true
+	get_interact.emit(interact)
+
+func _on_interact_zone_body_exited(body_player):
+	#ไม่แสดง E TO INTERACT
+	$textbox/e_interact.visible = false
+	
+	#ส่ง signal
+	interact = false
+	get_interact.emit(interact)
+	
+	#แก้สัญาณ signal //player
+	text_box = false
+	
+	#รีเซ็ตข้อความ
+	count_next_dialogue = 0
+	working_dialogue = false
+
+#signal //player
+func _on_player_get_textbox(get_textbox_bool): #player get interact
+	text_box = get_textbox_bool
+
+
+
+
+#--------------------------- dialogue ---------------------------
+signal get_player_speed
+var on_dialogue = false
+
+var count_next_dialogue = 0
+var count_dialogue = 0
+var working_dialogue = false
+
+@export_category("Dialogue Setting")
+@export var cooldown_text = 0
+
+#แสดงข้อความ
+func get_dialogue():
+	$textbox/dialogue/cooldown_text.wait_time = cooldown_text
+	
+	#เมื่อมีการกด E จะทำงาน หรือ text_box == true
+	if text_box:
+		if Input.is_action_just_pressed("e_interact"): #skip ข้อความ
+			count_next_dialogue += 1
+			if count_dialogue <= 9:
+				count_dialogue += 1
+			$textbox/dialogue/cooldown_text.start() #เวลาคันข้อความต่อไป
+		
+		#ตรวจสอบ count_dialogue == 10 และ working_dialogue ไม่ทำงาน
+		if count_dialogue == 10 and working_dialogue == false:
+			count_next_dialogue = 10
+		
+		#ดึงข้อความจาก csv translation
+		if count_next_dialogue == 1:
+			$textbox/dialogue/text.text = tr("sayhi")
+			#เพื่อบอกว่า dialogue ทำงานอยู่
+			working_dialogue = true
+		elif count_next_dialogue == 2:
+			$textbox/dialogue/text.text = tr("welcome")
+			working_dialogue = true
+		elif count_next_dialogue == 3:
+			$textbox/dialogue/text.text = (" ")
+			working_dialogue = true
+		elif count_dialogue >= 10:
+			$textbox/dialogue/text.text = tr("null")
+
+#เวลาคันข้อความต่อไป
+func _on_cooldown_text_timeout():
+	if text_box:
+		count_next_dialogue += 1
+	else :
+		count_next_dialogue += 0
+
+func dialogue_textbox():
+	if text_box:
+		$textbox/e_interact.visible = false
+		$textbox/dialogue.visible = true
+		
+		#ส่งสัญาณ singal ไปหา player
+		#เพื่อเมื่ออยู่ใน dialogue ให้เดินไม่ได้
+		on_dialogue = true
+		get_player_speed.emit(on_dialogue)
+		
+	elif text_box == false:
+		$textbox/dialogue.visible = false
+		
+		#ส่งสัญาณ singal ไปหา player
+		#เพื่อเมื่ออยู่ใน dialogue ให้เดินไม่ได้
+		on_dialogue = false
+		get_player_speed.emit(on_dialogue)
+
+func translation():
+	#interact
+	$textbox/e_interact.text = tr("interact")
+
