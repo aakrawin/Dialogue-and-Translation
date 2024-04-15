@@ -1,0 +1,16 @@
+#Player Node v0.1
+signal get_textbox
+
+var get_interact_bool = false
+var get_textbox_bool = false
+
+#signal //npc_dialogue
+func _on_npc_dialogue_get_interact(interact_bool): #player in zone interact
+	get_interact_bool = interact_bool 
+
+#get interact
+func interact():
+	if get_interact_bool:
+		if Input.is_action_just_pressed("e_interact"):
+			get_textbox_bool = true
+			get_textbox.emit(get_textbox_bool)
